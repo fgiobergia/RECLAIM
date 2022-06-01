@@ -43,7 +43,7 @@ def find_confusion_matrix(**kwargs):
             pass
         else:
             # IP problem
-            return solve_ip(beta=kwargs.get("beta", 1), **vals)
+            return solve_ip_problem(beta=kwargs.get("beta", 1), **vals)
     
     else:
         # 4+ constraints available -- extract v = A^(-1)b
