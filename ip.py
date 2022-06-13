@@ -7,12 +7,31 @@ import warnings
 
 
 def solve_ip_problem(**kwargs):
+    """Create and solve IP problem, given the metrics as inputs (same format
+    as find_confusion_matrix()).
+
+    The constraints can be expressed in either of two ways:
+
+    metric=value: in this case, an equality constraint is introduced
+    metric=(min_value, max_value): in this case, two inequality constraints are introduced, 
+                                   so as to guarantee that the solution produces the metric
+                                   that is contained in the specified range. This is useful, 
+                                   for example, when the available value for the metric has
+                                   been rounded.
+    """
+
+    # vector representing confusion matrix, as [tp, tn, fp, fn]
+    # enforcing integer constraint
     v = cp.Variable(4, integer=True)
     
+    # the 1st constraint is on all values, which are expected to be positive
     constraints = [
         v >= 0
     ]
     
+    # W is used to keep track of the constraints currently in place -- used
+    # to determine d (i.e. which element of the confusion matrix) should be
+    # used for the maximiziation & minimization problems.
     W = np.zeros((4,4))
     i = 0
     if "C" in kwargs:
@@ -95,6 +114,13 @@ def solve_ip_problem(**kwargs):
     
     d = 0
     if i == 3:
+
+        # To decide the 4th constraint to be introduced (which
+        # fixes one of tp, tn, fp, fn), we need to make sure that
+        # the introduction of the 4th constraint results in a 
+        # matrix of coefficients W that has det(W) > 0. 
+        # If that is not the case, we are still leaving at least 
+        # one degree of freedom to the problem. 
         while d < 4:
             W[i] = np.eye(4)[d]
             if np.linalg.det(W) != 0:
@@ -104,7 +130,8 @@ def solve_ip_problem(**kwargs):
 
         if d > 3:
             # there is no other suitable solution. This means that some boundaries
-            # will not be found. Raise a warning, but continue
+            # will not be found. Raise a warning, but continue. 
+            # This may occur, for example, when the constraints passed are Fb, P, R.
             warnings.warn("No suitable variable found for optimization. No upper bound may be found")
             d = 0
     elif i > 4:
@@ -116,7 +143,10 @@ def solve_ip_problem(**kwargs):
     prob_min = cp.Problem(obj_min, constraints=constraints)
     prob_max = cp.Problem(obj_max, constraints=constraints)
     
-    # previously: "SCIP"
+    # solve minimization and a maximization problems. Return 
+    # the obtained matrices as lower and upper bounds (w.r.t. some element
+    # of the confusion matrix)
+    # NOTE: previously using the "SCIP" solver. Either works fine.
     prob_min.solve(solver=PYTHON_MIP())
     min_val = v.value
     prob_max.solve(solver=PYTHON_MIP())
