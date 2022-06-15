@@ -1,6 +1,7 @@
 # Experiment to generate the plots shown in the paper
 from sklearn.datasets import make_classification
 import numpy as np
+from sklearn.tree import DecisionTreeClassifier
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from ip import solve_ip_problem
@@ -56,8 +57,9 @@ def gen_performance(variable, ds_type="classification", repeats=10):
                             X, y = make_classification(ds_size, random_state=42*i, weights=(1-frac,))
                         elif ds_type == "linear":
                             X, y = make_linear(n_pts=ds_size, random_state=42*i)
-
-                        C, N_P, metrics = train_test(X, y, test_size, m_d)
+                        
+                        clf = DecisionTreeClassifier(max_depth=m_d, random_state=42)
+                        C, N_P, metrics = train_test(X, y, test_size, clf)
                         
                         for m in ["A", "Fb", "P", "R"]:
                             vmin, vmax = solve_ip_problem(C=C, N_P=N_P, **{m: metrics[m]})

@@ -90,7 +90,7 @@ def make_linear(n_pts=5000, eps=.25, random_state=42):
     y = (X[:,0] - X[:,1] <= 0).astype(int)
     return X, y
 
-def train_test(X, y, test_size, m_d, random_state=42):
+def train_test(X, y, test_size, clf, random_state=42):
     """Given a binary-labelled dataset, build a classifier (decision tree) and
     return a bunch of metrics (which will be used for reconstruction.
     
@@ -100,7 +100,7 @@ def train_test(X, y, test_size, m_d, random_state=42):
         y: similarly to X, either the target labels or a tuple containing (y_train, y_test), the
            target labels for the (already split) training and test sets.
         test_size (float): the test set size. If None, X and y are assumed to already contain the splits.
-        m_d (int): maximum depth that the decision tree is allowed to reach (max_depth parameter in sklearn). 
+        clf (model): model to be used for the training
         random_state (int): random state to set for reproducibility
     
     Returns:
@@ -116,7 +116,6 @@ def train_test(X, y, test_size, m_d, random_state=42):
         X_train, X_test = X
         y_train, y_test = y
 
-    clf = DecisionTreeClassifier(max_depth=m_d, random_state=random_state)
     clf.fit(X_train, y_train)
 
     y_pred = clf.predict(X_test)

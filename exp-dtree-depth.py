@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.tree import DecisionTreeClassifier
 from utils import make_linear, train_test
 import os
 
@@ -16,7 +17,8 @@ if __name__ == "__main__":
     for i in range(repeats):
         X, y = make_linear(n_pts=n_pts, eps=.25, random_state=42*i)
         for md_pos, m_d in enumerate(max_depths):
-            C, N_P, metrics = train_test(X, y, test_size, m_d)
+            clf = DecisionTreeClassifier(max_depth=m_d, random_state=42)
+            C, N_P, metrics = train_test(X, y, test_size, clf)
             scores[:, i, md_pos] = [ metrics[v] for v in metrics_order ]
 
     fig, ax = plt.subplots(figsize=(6,4))
