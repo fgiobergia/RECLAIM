@@ -2,6 +2,7 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 import numpy as np
+import warnings
 
 
 def get_coef_intercept(value, metric, beta=1):
@@ -62,7 +63,9 @@ def rebuild_metric_range(cm1, cm2, metric, correct_value=None):
         # using a small epsilon to avoid false positives due to
         # python rounding problems (e.g. 0.9 ==> 0.900000000005)
         eps = 1e-4
-        assert min(v1,v2) - eps <= correct_value <= max(v1, v2) + eps, f"{v1} {v2} {correct_value}"
+        # assert min(v1,v2) - eps <= correct_value <= max(v1, v2) + eps, f"{v1} {v2} {correct_value}"
+        if not (min(v1,v2) - eps <= correct_value <= max(v1, v2) + eps, f"{v1} {v2} {correct_value}"):
+            warnings.warn(f"Range found [{v1}, {v2}] does not contain correct value {correct_value}!")
     return abs(v1-v2) # returns range
 
 
