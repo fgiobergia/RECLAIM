@@ -8,7 +8,7 @@ from ip import solve_ip_problem
 from utils import make_linear, train_test, rebuild_metric_range
 import os
 
-def gen_performance(variable, ds_type="classification", repeats=10): 
+def gen_performance(variable, ds_type="classification", repeats=10, rounding=None): 
     test_size = .2
     
     defaults = {
@@ -23,17 +23,17 @@ def gen_performance(variable, ds_type="classification", repeats=10):
     if variable == "C":
         min_test_size = 100
         max_test_size = 50000
-        ds_size_list = list(map(int, np.logspace(np.log10(min_test_size/test_size), np.log10(max_test_size/test_size), 25)))
+        ds_size_list = list(map(int, np.logspace(np.log10(min_test_size/test_size), np.log10(max_test_size/test_size), 15)))
         frac_list = defaults["frac"]
         m_d_list = defaults["m_d"]
     elif variable == "N_P":
         ds_size_list = defaults["ds_size"]
-        frac_list = np.linspace(0.01, 0.99, 25)
+        frac_list = np.linspace(0.01, 0.99, 15)
         m_d_list = defaults["m_d"]
     elif variable == "m_d":
         ds_size_list = defaults["ds_size"]
         frac_list = defaults["frac"]
-        m_d_list = np.arange(1, 31)
+        m_d_list = np.arange(1, 31, 2)
     
     # this dictionary contains, for each combination
     # of factors, the full description of all metrics
@@ -54,20 +54,27 @@ def gen_performance(variable, ds_type="classification", repeats=10):
                     for i in bar:
                         if ds_type == "classification":
                             # 42*i to obtain `repeats` different datasets
-                            X, y = make_classification(ds_size, random_state=42*i, weights=(1-frac,))
+                            X, y = make_classification(ds_size, random_state=42, weights=(1-frac,))
                         elif ds_type == "linear":
-                            X, y = make_linear(n_pts=ds_size, random_state=42*i)
+                            X, y = make_linear(n_pts=ds_size, random_state=42)
                         
                         clf = DecisionTreeClassifier(max_depth=m_d, random_state=42)
-                        C, N_P, metrics = train_test(X, y, test_size, clf)
+                        C, N_P, metrics = train_test(X, y, test_size, clf, random_state=42*i)
                         
                         for m in ["A", "Fb", "P", "R"]:
-                            vmin, vmax = solve_ip_problem(C=C, N_P=N_P, **{m: metrics[m]})
+                            val = metrics[m]
+                            if rounding is not None:
+                                val1 = round(val, rounding) - 5 * 10 ** -(rounding + 1)
+                                val2 = round(val, rounding) + 5 * 10 ** -(rounding + 1)
+                                val = (val1, val2)
+
+                            vmin, vmax = solve_ip_problem(C=C, N_P=N_P, **{m: val})
                             info[ds_size][frac][m_d][m].append((vmin, vmax, C, N_P, metrics))
     return info
 
 def plot_performance(info, variable, outdir):
-    fig, ax = plt.subplots(2, 2, figsize=(20,15))
+    # fig, ax = plt.subplots(2, 2, figsize=(20,15))
+    fig, ax = plt.subplots(1, 4, figsize=(23,4))
 
     metric_names = {
         "A": "accuracy",
@@ -118,31 +125,32 @@ def plot_performance(info, variable, outdir):
             "Fb": "g"
         }
         markers = {
-            "A": "*",
+            "A": "s",
             "P": "v",
-            "R": "^",
+            "R": "x",
             "Fb": "o"
         }
         for j, metr in enumerate(["P", "A", "R", "Fb"]):
             if metr == computed_metric:
                 continue
-            ax[i//2,i%2].errorbar(x[metr],y[metr],z[metr], label=metr, capsize=3, color=colors[metr], marker=markers[metr], zorder=j)
+            ax[i].errorbar(x[metr],y[metr],z[metr], label=metr, capsize=3, color=colors[metr], marker=markers[metr], zorder=j)
             if variable == "C":
-                ax[i//2,i%2].set_xscale('log', base=10)
-        ax[i//2,i%2].grid()
-        ax[i//2,i%2].set_title(f"Reconstructed range for {metric_names[computed_metric]}")
-        ax[i//2,i%2].set_ylim([0, 1])
-        ax[i//2,i%2].set_ylabel("reconstructed range width")
-        ax[i//2,i%2].set_xlabel("dataset size" if variable == "C" else "fraction of positive samples" if variable == "N_P" else "maximum tree depth" if variable == "m_d" else "!!!")
+                ax[i].set_xscale('log', base=10)
+        ax[i].grid()
+        ax[i].set_title(f"Reconstructing {metric_names[computed_metric]}")
+        ax[i].set_ylim([0, 1])
+        if i == 0:
+            ax[i].set_ylabel("reconstructed range width")
+        ax[i].set_xlabel("dataset size" if variable == "C" else "fraction of positive samples" if variable == "N_P" else "maximum tree depth" if variable == "m_d" else "!!!")
         if variable == "N_P":
-            ax[i//2,i%2].set_xlim([0, 1])
+            ax[i].set_xlim([0, 1])
         
     fig.legend(["Precision", "Recall", "$F_1$ score", "Accuracy"], loc="center right")
 
     fname = {
-        "C": "ds-size-plots.pdf",
-        "N_P": "n-p-plots.pdf",
-        "m_d": "m-d-plots.pdf"
+        "C": "ds-size-plots-x.pdf",
+        "N_P": "n-p-plots-x.pdf",
+        "m_d": "m-d-plots-x.pdf"
     }
     fig.savefig(os.path.join(outdir, fname[variable]), bbox_inches="tight")
 
@@ -152,7 +160,7 @@ if __name__ == "__main__":
     
     # generate plots for the 3 experiments
     # (fixing C, N_P and m_d respectively)
-    for variable in ["m_d"]: #"C", "N_P", "m_d"]:
+    for variable in ["m_d", "N_P", "C"]:
         ds_type = "linear" if variable == "m_d" else "classification"
-        info = gen_performance(variable, ds_type)
+        info = gen_performance(variable, ds_type, 4)
         plot_performance(info, variable, outdir)
