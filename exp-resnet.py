@@ -1,14 +1,12 @@
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, random_split
 import torch.optim as optim
 from torchvision import transforms
 import os
 from tqdm import tqdm
 from PIL import Image
-import matplotlib.pyplot as plt
 from glob import glob
-import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from utils import do_runs
 
