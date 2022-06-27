@@ -3,30 +3,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 import numpy as np
 import warnings
-
-
-def get_coef_intercept(value, metric, beta=1):
-    """Return coefficients and intercept for a given metric.
-
-    Parameters:
-        value (float): actual value of the metric
-        metric (str): name of the metric passed
-        beta (int): if metric="Fb", this is the beta value of the Fb score (typically, beta=1)a
-
-    Returns:
-    A tuple (w, b), where:
-        w (list[float]): coefficients of a row of the W matrix (Wv = b, where v= [tp,tn,fp,fn])
-        b float: one of the intercepts in b, where in Wv = b
-    """
-    coefs = {
-        "C": ([1,1,1,1], value),
-        "N_P": ([1,0,0,1], value),
-        "A": ([value-1, value-1, value, value], 0),
-        "P": ([value-1,0,value,0], 0),
-        "R": ([value-1,0,0,value], 0),
-        "Fb": ([ (value-1)*(1+beta**2), 0, value, value*beta**2 ], 0)
-    }
-    return coefs[metric]
+from ip import solve_ip_problem
+from prettytable import PrettyTable
 
 def rebuild_metric_range(cm1, cm2, metric, correct_value=None):
     """
@@ -133,3 +111,48 @@ def train_test(X, y, test_size, clf, random_state=42):
     N_P = y_test.sum()
     return C, N_P, metrics
 
+
+def rounding_reconstruction(C, N_P, metrics, metrics_order):
+    roundings = [4, 32]
+    recs = np.zeros((len(metrics), len(metrics), len(roundings)))
+    for j, m in enumerate(metrics_order):
+        val = metrics[m]
+        for p, i in enumerate(roundings):
+            val1 = round(val, i) - 5 * 10 ** -(i + 1)
+            val2 = round(val, i) + 5 * 10 ** -(i + 1)
+            cm1, cm2 = solve_ip_problem(C=C, N_P=N_P, **{m: (val1, val2)})
+            for k, m_r in enumerate(metrics_order):
+                recs[j, k, p] = rebuild_metric_range(cm1, cm2, m_r, metrics[m_r])
+    return recs
+
+def do_runs(ds, trainer, n_runs):
+    metrics_order = ["A","P","R","Fb"]
+    metric_names = {
+        "A": "Accuracy",
+        "P": "Precision", 
+        "R": "Recall",
+        "Fb": "F_1 score"
+    }
+    reconstructions = []
+    for i in range(n_runs):
+        C, N_P, metrics = trainer(ds, random_state=42*i) 
+        reconstructions.append(rounding_reconstruction(C, N_P, metrics, metrics_order))
+    rec = np.array(reconstructions)
+
+    rec_mean = rec.mean(axis=0)
+    rec_std = rec.std(axis=0)
+
+    table = PrettyTable()
+
+    table.field_names = [""] + [ metric_names[m] for m in metrics_order ]
+
+    for i, m in enumerate(metrics_order):
+        row = [metric_names[m]]
+        for j, mr in enumerate(metrics_order):
+            row.append(f"{round(rec_mean[i, j, 1],4)} +/- {round(rec_std[i,j,1],4)}")
+        table.add_row(row)
+        row = [f"{metric_names[m]} (rounded)"]
+        for j, mr in enumerate(metrics_order):
+            row.append(f"{round(rec_mean[i, j, 0],4)} +/- {round(rec_std[i,j,0],4)}")
+        table.add_row(row)
+    print(table)

@@ -1,8 +1,5 @@
 import numpy as np
-from utils import get_coef_intercept
-from ip import solve_ip_problem
-
-
+from ip import solve_ip_problem, get_coef_intercept
 
 def find_confusion_matrix(**kwargs):
     """Given some constraints as input, find the confusion matrix (or its boundaries). 
