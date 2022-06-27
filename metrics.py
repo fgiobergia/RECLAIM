@@ -45,24 +45,18 @@ def find_confusion_matrix(**kwargs):
             # IP problem
             return solve_ip_problem(beta=kwargs.get("beta", 1), **vals)
     
-    else:
+    elif len(vals) >= 4:
         # 4+ constraints available -- extract v = A^(-1)b
-        # build A with 4 available constraints -- if other constraints
-        # are available, use those for an additional check
-        
-        # if C and N_P are available, prefer them over others
-        pref_set = {"C", "N_P"}
-        A_vals = pref_set & set(vals)
-        A_vals |= set(list(set(vals) - pref_set)[:4-len(A_vals)])
-        A_vals = list(A_vals)
-        
-        A = np.zeros((4,4))
-        b = np.zeros(4)
-        for i, v in enumerate(A_vals):
+        # (if > 4 constraints, use pseudoinverse)
+                
+        A = np.zeros((len(vals),4))
+        b = np.zeros(len(vals))
+        for i, v in enumerate(vals):
             a_, b_ = get_coef_intercept(vals[v], v, kwargs.get("beta", 1))
             A[i] = a_
             b[i] = b_
-        print(A, b)
-        print(A_vals)
         
-        return np.linalg.solve(A, b)
+        if len(vals) == 4:
+            return np.linalg.solve(A, b)
+        else:
+            return np.dot(np.linalg.pinv(A), b)
