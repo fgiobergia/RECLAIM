@@ -3,6 +3,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
 import torch.optim as optim
 from torchvision import transforms
+import numpy as np
+import random
 from tqdm import tqdm
 from PIL import Image
 from glob import glob
@@ -135,5 +137,7 @@ if __name__ == "__main__":
     ds = ImageDataset([class0, class1])
     
     torch.manual_seed(42)
+    np.random.seed(42)
+    random.seed(42)
     
     do_runs(ds, trainer, 10)
