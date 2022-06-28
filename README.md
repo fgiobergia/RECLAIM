@@ -114,3 +114,11 @@ Produces:
 (array([ 808., 1006.,    0.,  186.]), array([991., 781., 225.,   3.]))
 ```
 In this case, the range for accuracy will be from 0.886 to 0.907 -- once again a range of ~ 0.02. 
+
+### Results reproducibility
+
+All the results presented in the original paper are reproducible. They can be found in the directory experiments/ of this repository. All random seeds have been fixed to produce the same results, using Python 3.8.5 and the library versions specified in the requirements.txt file. To run any of the experiments, launch from the root directory of this project:
+```
+python experiments/experiment-name.py
+```
+Plots will be produced in the plots/ directory (to be created if not already there).
