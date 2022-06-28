@@ -33,14 +33,9 @@ def find_confusion_matrix(**kwargs):
         raise Exception("Not enough constraints available")
     
     if len(vals) < 4:
-        # solve either as IP problem, or as accuracy-based
-        
-        if set(vals) == { "A", "N_P", "C"}:
-            # accuracy-based
-            pass
-        else:
-            # IP problem
-            return solve_ip_problem(beta=kwargs.get("beta", 1), **vals)
+        # solve as IP problem
+        # TODO: add accuracy-based solution w/o ip problem?
+        return solve_ip_problem(beta=kwargs.get("beta", 1), **vals)
     
     elif len(vals) >= 4:
         # 4+ constraints available -- extract v = A^(-1)b

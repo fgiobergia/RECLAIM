@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import os
 import sys
 sys.path.insert(0, os.getcwd())
-from reclaim.ip import solve_ip_problem
+from reclaim import find_confusion_matrix
 from reclaim.utils import make_linear, train_test, rebuild_metric_range
 
 def gen_performance(variable, ds_type="classification", repeats=10, rounding=None): 
@@ -55,12 +55,12 @@ def gen_performance(variable, ds_type="classification", repeats=10, rounding=Non
                 with tqdm(range(repeats)) as bar:
                     for i in bar:
                         if ds_type == "classification":
-                            # 42*i to obtain `repeats` different datasets
                             X, y = make_classification(ds_size, random_state=42, weights=(1-frac,))
                         elif ds_type == "linear":
                             X, y = make_linear(n_pts=ds_size, random_state=42)
                         
                         clf = DecisionTreeClassifier(max_depth=m_d, random_state=42)
+                        # 42*i to obtain `repeats` different splits
                         C, N_P, metrics = train_test(X, y, test_size, clf, random_state=42*i)
                         
                         for m in ["A", "Fb", "P", "R"]:
@@ -70,7 +70,7 @@ def gen_performance(variable, ds_type="classification", repeats=10, rounding=Non
                                 val2 = round(val, rounding) + 5 * 10 ** -(rounding + 1)
                                 val = (val1, val2)
 
-                            vmin, vmax = solve_ip_problem(C=C, N_P=N_P, **{m: val})
+                            vmin, vmax = find_confusion_matrix(C=C, N_P=N_P, **{m: val})
                             info[ds_size][frac][m_d][m].append((vmin, vmax, C, N_P, metrics))
     return info
 
