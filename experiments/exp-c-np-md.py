@@ -4,9 +4,11 @@ import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from ip import solve_ip_problem
-from utils import make_linear, train_test, rebuild_metric_range
 import os
+import sys
+sys.path.insert(0, os.getcwd())
+from reclaim.ip import solve_ip_problem
+from reclaim.utils import make_linear, train_test, rebuild_metric_range
 
 def gen_performance(variable, ds_type="classification", repeats=10, rounding=None): 
     test_size = .2
@@ -148,9 +150,9 @@ def plot_performance(info, variable, outdir):
     fig.legend(["Precision", "Recall", "$F_1$ score", "Accuracy"], loc="center right")
 
     fname = {
-        "C": "ds-size-plots-x.pdf",
-        "N_P": "n-p-plots-x.pdf",
-        "m_d": "m-d-plots-x.pdf"
+        "C": "ds-size-plots.pdf",
+        "N_P": "n-p-plots.pdf",
+        "m_d": "m-d-plots.pdf"
     }
     fig.savefig(os.path.join(outdir, fname[variable]), bbox_inches="tight")
 

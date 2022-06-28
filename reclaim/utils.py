@@ -3,7 +3,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 import numpy as np
 import warnings
-from ip import solve_ip_problem
+from .ip import solve_ip_problem
 from prettytable import PrettyTable
 
 def rebuild_metric_range(cm1, cm2, metric, correct_value=None):

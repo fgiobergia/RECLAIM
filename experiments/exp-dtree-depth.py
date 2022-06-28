@@ -1,7 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
-from utils import make_linear, train_test
+import os
+import sys
+sys.path.insert(0, os.getcwd())
+from reclaim.utils import make_linear, train_test
 import os
 
 if __name__ == "__main__":

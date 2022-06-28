@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
-import os
 from sklearn.ensemble import RandomForestClassifier
-from utils import train_test, do_runs
+import os
+import sys
+sys.path.insert(0, os.getcwd())
+from reclaim.utils import train_test, do_runs
 
 def read_adult():
     column_names = ["age", "workclass", "fnlwgt", "education", "education-num", "marital-status", "occupation", "relationship", "race", "sex", "capital-gain", "capital-loss", "hours-per-week", "native-country", "class"]
