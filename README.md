@@ -1,6 +1,6 @@
 # RECLAIM: Reverse Engineering CLAssIfication Metrics
 
-This is the source code for RECLAIM, currently under review. 
+This is the source code for RECLAIM, based on the work presented at IEEE AIKE 2022. 
 
 ## What is RECLAIM?
 
